@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Management Dashboard 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+    <div id="dashboard-content" class="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+        
+        <div class="flex justify-between items-center border-b pb-4 mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-800">BÁO CÁO DOANH THU & CHIẾN LƯỢC GIÁ 2026</h1>
+                <p class="text-gray-500 mt-1">Khách sạn D'lioro - Ngày báo cáo: <span id="current-date"></span></p>
+            </div>
+            <button onclick="exportPDF()" data-html2canvas-ignore="true" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow">
+                📄 Xuất file PDF
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-blue-50 p-4 rounded-lg" data-html2canvas-ignore="true">
+            <div>
+                <label class="block text-sm font-semibold mb-1">Hạng phòng:</label>
+                <select id="room-type" class="w-full p-2 border rounded" onchange="loadRoomData()">
+                    <option value="sdd">Senior Deluxe (SDD)</option>
+                    <option value="dst">Deluxe Suite (DST)</option>
+                    <option value="vil7">Villa 7 (VIL7)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Chi phí (Cost - VND):</label>
+                <input type="number" id="room-cost" class="w-full p-2 border rounded bg-gray-200" readonly>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Biên lợi nhuận tối thiểu (%):</label>
+                <input type="number" id="target-margin" value="20" class="w-full p-2 border rounded" oninput="calculateRate()">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Giá đối thủ (Compset - VND):</label>
+                <input type="number" id="comp-price" value="1300000" class="w-full p-2 border rounded" oninput="calculateRate()">
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📊 Ma trận Giá Gợi ý</h2>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-blue-800 text-white">
+                        <th class="p-3 border">Hạng phòng</th>
+                        <th class="p-3 border">Chi phí (Cost)</th>
+                        <th class="p-3 border">Giá Sàn Đề Xuất (Floor)</th>
+                        <th class="p-3 border">Giá Bán Lẻ (BAR 10)</th>
+                        <th class="p-3 border">Giá Đối thủ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="bg-gray-50">
+                        <td id="td-room" class="p-3 border font-semibold">Senior Deluxe</td>
+                        <td id="td-cost" class="p-3 border text-red-600">491,000</td>
+                        <td id="td-floor" class="p-3 border font-bold text-orange-600">589,200</td>
+                        <td id="td-bar" class="p-3 border font-bold text-green-600">1,200,000</td>
+                        <td id="td-comp" class="p-3 border text-blue-600">1,300,000</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p id="analysis-text" class="mt-4 text-sm italic text-gray-700 bg-yellow-50 p-3 rounded border-l-4 border-yellow-400">
+                Nhận xét: Giá BAR hiện tại đang cạnh tranh tốt so với đối thủ và đảm bảo biên lợi nhuận an toàn.
+            </p>
+        </div>
+
+        <div>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📈 So sánh Cấu trúc Giá</h2>
+            <div class="w-full h-80">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Set ngày hiện tại
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('vi-VN');
+
+        // Dữ liệu mẫu lấy từ file Excel của Sếp
+        const database = {
+            sdd: { name: "Senior Deluxe (SDD)", cost: 491000, defaultBar: 1200000, defaultComp: 1300000 },
+            dst: { name: "Deluxe Suite (DST)", cost: 717000, defaultBar: 2700000, defaultComp: 2900000 },
+            vil7: { name: "Villa 7 (VIL7)", cost: 6951000, defaultBar: 11500000, defaultComp: 12000000 }
+        };
+
+        let myChart;
+
+        function loadRoomData() {
+            const roomKey = document.getElementById('room-type').value;
+            const data = database[roomKey];
+            
+            document.getElementById('room-cost').value = data.cost;
+            document.getElementById('comp-price').value = data.defaultComp;
+            calculateRate();
+        }
+
+        function formatVND(number) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number);
+        }
+
+        function calculateRate() {
+            const roomKey = document.getElementById('room-type').value;
+            const roomName = database[roomKey].name;
+            const barPrice = database[roomKey].defaultBar;
+            
+            const cost = parseFloat(document.getElementById('room-cost').value);
+            const margin = parseFloat(document.getElementById('target-margin').value);
+            const compPrice = parseFloat(document.getElementById('comp-price').value);
+
+            // Tính Giá Sàn (Cost + Margin)
+            const floorPrice = cost * (1 + (margin / 100));
+
+            // Cập nhật Bảng
+            document.getElementById('td-room').innerText = roomName;
+            document.getElementById('td-cost').innerText = formatVND(cost);
+            document.getElementById('td-floor').innerText = formatVND(floorPrice);
+            document.getElementById('td-bar').innerText = formatVND(barPrice);
+            document.getElementById('td-comp').innerText = formatVND(compPrice);
+
+            // Tự động sinh Nhận xét
+            let analysis = "";
+            if (barPrice < floorPrice) {
+                analysis = "CẢNH BÁO: Giá BAR đang bán dưới mức Giá Sàn (Lỗ). Cần điều chỉnh tăng giá!";
+            } else if (barPrice > compPrice) {
+                analysis = "Lưu ý: Giá BAR của bạn đang cao hơn đối thủ. Khuyến nghị tung thêm các gói giá trị gia tăng (Value-add) để giữ khách.";
+            } else {
+                analysis = "Tuyệt vời: Giá BAR cạnh tranh tốt và đảm bảo biên lợi nhuận an toàn theo kỳ vọng.";
+            }
+            document.getElementById('analysis-text').innerText = "Nhận xét của Trợ lý RM: " + analysis;
+
+            // Cập nhật Biểu đồ
+            updateChart(roomName, cost, floorPrice, barPrice, compPrice);
+        }
+
+        function updateChart(roomName, cost, floor, bar, comp) {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            if (myChart) {
+                myChart.destroy(); // Xóa biểu đồ cũ trước khi vẽ lại
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Cấu trúc giá ' + roomName],
+                    datasets: [
+                        { label: 'Chi phí (Cost)', data: [cost], backgroundColor: '#ef4444' },
+                        { label: 'Giá Sàn (Floor)', data: [floor], backgroundColor: '#f97316' },
+                        { label: 'Giá Bán Lẻ (BAR)', data: [bar], backgroundColor: '#22c55e' },
+                        { label: 'Giá Đối Thủ', data: [comp], backgroundColor: '#3b82f6' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Chức năng xuất PDF
+        function exportPDF() {
+            const element = document.getElementById('dashboard-content');
+            const opt = {
+                margin:       0.5,
+                filename:     'Bao_Cao_Revenue_Dlioro_2026.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            // New Promise-based usage:
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Khởi tạo ban đầu
+        window.onload = loadRoomData;
+    </script>
+</body>
+</html>
