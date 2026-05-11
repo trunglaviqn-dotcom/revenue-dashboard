@@ -11,7 +11,8 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .nav-item.active { border-bottom: 3px solid #3b82f6; color: #1d4ed8; font-weight: 600; }
-        input[type="number"] { text-align: right; }
+        input[type="number"], input[type="date"] { text-align: right; }
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans h-screen flex flex-col">
@@ -19,7 +20,11 @@
     <header class="bg-slate-900 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold tracking-wide"><i class="fa-solid fa-chart-line mr-3 text-blue-400"></i>QUẢN TRỊ DOANH THU & NĂNG LỰC CẠNH TRANH</h1>
-            <span class="text-sm bg-slate-800 px-3 py-1 rounded border border-slate-700">Citadines Marina Halong - Tổng quy mô: 208 Keys</span>
+            <div class="flex gap-3">
+                <button onclick="exportBackup()" class="text-sm bg-green-600 hover:bg-green-700 px-4 py-2 rounded transition shadow"><i class="fa-solid fa-download mr-2"></i>Lưu Backup (Tải xuống)</button>
+                <button onclick="document.getElementById('importFile').click()" class="text-sm bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition shadow"><i class="fa-solid fa-upload mr-2"></i>Tải Backup lên</button>
+                <input type="file" id="importFile" accept=".json" class="hidden" onchange="importBackup(event)">
+            </div>
         </div>
         <nav class="bg-white text-gray-600 shadow-sm">
             <div class="max-w-7xl mx-auto px-6 flex space-x-8">
@@ -35,91 +40,102 @@
         <div class="max-w-7xl mx-auto">
 
             <div id="tab-dashboard" class="tab-content active space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500">
-                        <p class="text-sm text-gray-500 font-medium uppercase mb-1">Occupancy Toàn khu</p>
-                        <p class="text-3xl font-bold text-gray-800" id="kpi-occ">0,00%</p>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-500">
+                        <p class="text-xs text-gray-500 font-medium uppercase mb-1">Occupancy</p>
+                        <p class="text-2xl font-bold text-gray-800" id="kpi-occ">0,00%</p>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-green-500">
-                        <p class="text-sm text-gray-500 font-medium uppercase mb-1">ADR (Giá bán bình quân)</p>
-                        <p class="text-3xl font-bold text-gray-800" id="kpi-adr">0</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-green-500">
+                        <p class="text-xs text-gray-500 font-medium uppercase mb-1">ADR (Giá bán BQ)</p>
+                        <p class="text-2xl font-bold text-gray-800" id="kpi-adr">0</p>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500">
-                        <p class="text-sm text-gray-500 font-medium uppercase mb-1">RevPAR</p>
-                        <p class="text-3xl font-bold text-gray-800" id="kpi-revpar">0</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-indigo-500">
+                        <p class="text-xs text-gray-500 font-medium uppercase mb-1">RevPAR</p>
+                        <p class="text-2xl font-bold text-gray-800" id="kpi-revpar">0</p>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-red-500">
-                        <p class="text-sm text-gray-500 font-medium uppercase mb-1">Tỷ lệ Rủi ro (Hủy/No-show)</p>
-                        <p class="text-3xl font-bold text-red-600" id="kpi-risk">0,00%</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-yellow-500">
+                        <p class="text-xs text-gray-500 font-medium uppercase mb-1">Thực tế / Forecast</p>
+                        <p class="text-2xl font-bold text-gray-800" id="kpi-forecast">0,00%</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-red-500">
+                        <p class="text-xs text-gray-500 font-medium uppercase mb-1">Rủi ro (Hủy/No-show)</p>
+                        <p class="text-2xl font-bold text-red-600" id="kpi-risk">0,00%</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Phân tích Phân khúc Khách hàng (Channel Mix)</h3>
-                        <div class="h-64 flex justify-center">
-                            <canvas id="segmentChart"></canvas>
-                        </div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">Phân tích Phân khúc Khách hàng</h3>
+                        <div class="h-64 flex justify-center"><canvas id="segmentChart"></canvas></div>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-sm">
                         <h3 class="text-lg font-bold text-gray-800 mb-4">Năng lực Cạnh tranh (Competitive Radar)</h3>
-                        <div class="h-64 flex justify-center">
-                            <canvas id="radarChart"></canvas>
-                        </div>
+                        <div class="h-64 flex justify-center"><canvas id="radarChart"></canvas></div>
                     </div>
                 </div>
             </div>
 
             <div id="tab-entry" class="tab-content bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800 border-b pb-4 mb-6">Cập nhật Kinerja Hàng ngày</h2>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="flex justify-between items-end border-b pb-4 mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Cập nhật Kinerja Hàng ngày</h2>
                     <div>
-                        <h3 class="text-lg font-bold text-blue-800 mb-4"><i class="fa-solid fa-bed mr-2"></i>Công suất & Doanh thu</h3>
-                        <table class="w-full text-left border-collapse">
+                        <label class="block text-sm font-bold text-gray-600 mb-1">Ngày cập nhật dữ liệu:</label>
+                        <input type="date" id="record-date" class="p-2 border rounded focus:ring-2 focus:ring-blue-400 font-medium">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                    <div class="xl:col-span-8 overflow-x-auto">
+                        <h3 class="text-lg font-bold text-blue-800 mb-4"><i class="fa-solid fa-bed mr-2"></i>Công suất, Doanh thu & Forecast</h3>
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-200">
-                                    <th class="py-3 px-4 font-medium text-gray-600">Loại hình</th>
-                                    <th class="py-3 px-4 font-medium text-gray-600 text-center">Tồn kho</th>
-                                    <th class="py-3 px-4 font-medium text-gray-600">Phòng đã bán</th>
-                                    <th class="py-3 px-4 font-medium text-gray-600">Doanh thu (VND)</th>
+                                    <th class="py-3 px-3 font-medium text-gray-600">Loại hình</th>
+                                    <th class="py-3 px-3 font-medium text-gray-600 text-center">Tồn kho (Keys)</th>
+                                    <th class="py-3 px-3 font-medium text-gray-600">Phòng đã bán</th>
+                                    <th class="py-3 px-3 font-medium text-gray-600">Doanh thu (VND)</th>
+                                    <th class="py-3 px-3 font-medium text-gray-600">Forecast (VND)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="border-b border-gray-100">
-                                    <td class="py-3 px-4 font-medium">Khách sạn</td>
-                                    <td class="py-3 px-4 text-center text-gray-500" id="inv-htl">156</td>
-                                    <td class="py-3 px-4"><input type="number" id="sold-htl" class="w-20 p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
-                                    <td class="py-3 px-4"><input type="number" id="rev-htl" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3 font-medium">Khách sạn</td>
+                                    <td class="py-3 px-3"><input type="number" id="inv-htl" value="156" class="w-20 p-2 border rounded focus:ring-2 focus:ring-blue-400 bg-blue-50 text-center font-bold" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="sold-htl" class="w-24 p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="rev-htl" class="w-full min-w-[120px] p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="fc-htl" class="w-full min-w-[120px] p-2 border rounded focus:ring-2 focus:ring-yellow-400" onchange="autoSum()"></td>
                                 </tr>
                                 <tr class="border-b border-gray-100">
-                                    <td class="py-3 px-4 font-medium">Căn hộ</td>
-                                    <td class="py-3 px-4 text-center text-gray-500" id="inv-apt">36</td>
-                                    <td class="py-3 px-4"><input type="number" id="sold-apt" class="w-20 p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
-                                    <td class="py-3 px-4"><input type="number" id="rev-apt" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3 font-medium">Căn hộ</td>
+                                    <td class="py-3 px-3"><input type="number" id="inv-apt" value="36" class="w-20 p-2 border rounded focus:ring-2 focus:ring-blue-400 bg-blue-50 text-center font-bold" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="sold-apt" class="w-24 p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="rev-apt" class="w-full min-w-[120px] p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="fc-apt" class="w-full min-w-[120px] p-2 border rounded focus:ring-2 focus:ring-yellow-400" onchange="autoSum()"></td>
                                 </tr>
                                 <tr class="border-b border-gray-100">
-                                    <td class="py-3 px-4 font-medium">Biệt thự</td>
-                                    <td class="py-3 px-4 text-center text-gray-500" id="inv-vil">16</td>
-                                    <td class="py-3 px-4"><input type="number" id="sold-vil" class="w-20 p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
-                                    <td class="py-3 px-4"><input type="number" id="rev-vil" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3 font-medium">Biệt thự</td>
+                                    <td class="py-3 px-3"><input type="number" id="inv-vil" value="16" class="w-20 p-2 border rounded focus:ring-2 focus:ring-blue-400 bg-blue-50 text-center font-bold" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="sold-vil" class="w-24 p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="rev-vil" class="w-full min-w-[120px] p-2 border rounded focus:ring-2 focus:ring-blue-400" onchange="autoSum()"></td>
+                                    <td class="py-3 px-3"><input type="number" id="fc-vil" class="w-full min-w-[120px] p-2 border rounded focus:ring-2 focus:ring-yellow-400" onchange="autoSum()"></td>
                                 </tr>
                                 <tr class="bg-slate-50 font-bold">
-                                    <td class="py-3 px-4 text-blue-900">TỔNG CỘNG</td>
-                                    <td class="py-3 px-4 text-center text-blue-900">208</td>
-                                    <td class="py-3 px-4 text-right text-blue-900" id="total-sold">0</td>
-                                    <td class="py-3 px-4 text-right text-blue-900" id="total-rev">0</td>
+                                    <td class="py-3 px-3 text-blue-900">TỔNG CỘNG</td>
+                                    <td class="py-3 px-3 text-center text-blue-900" id="total-inv">208</td>
+                                    <td class="py-3 px-3 text-right text-blue-900" id="total-sold">0</td>
+                                    <td class="py-3 px-3 text-right text-blue-900" id="total-rev">0</td>
+                                    <td class="py-3 px-3 text-right text-yellow-700" id="total-fc">0</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <div class="space-y-8">
+                    <div class="xl:col-span-4 space-y-6">
                         <div>
-                            <h3 class="text-lg font-bold text-green-700 mb-4"><i class="fa-solid fa-chart-pie mr-2"></i>Nguồn khách (Phân bổ phòng)</h3>
+                            <h3 class="text-lg font-bold text-green-700 mb-4"><i class="fa-solid fa-chart-pie mr-2"></i>Nguồn khách</h3>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="block text-sm text-gray-600">OTA</label><input type="number" id="seg-ota" class="w-full p-2 border rounded mt-1"></div>
-                                <div><label class="block text-sm text-gray-600">Direct (Trực tiếp)</label><input type="number" id="seg-dir" class="w-full p-2 border rounded mt-1"></div>
+                                <div><label class="block text-sm text-gray-600">Direct</label><input type="number" id="seg-dir" class="w-full p-2 border rounded mt-1"></div>
                                 <div><label class="block text-sm text-gray-600">Corporate</label><input type="number" id="seg-cor" class="w-full p-2 border rounded mt-1"></div>
                                 <div><label class="block text-sm text-gray-600">Group/MICE</label><input type="number" id="seg-grp" class="w-full p-2 border rounded mt-1"></div>
                             </div>
@@ -128,13 +144,13 @@
                         <div>
                             <h3 class="text-lg font-bold text-red-700 mb-4"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Chỉ số Rủi ro</h3>
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="block text-sm text-gray-600">Số phòng Hủy (Cancellations)</label><input type="number" id="risk-cancel" class="w-full p-2 border rounded mt-1"></div>
-                                <div><label class="block text-sm text-gray-600">Bỏ phòng (No-show)</label><input type="number" id="risk-noshow" class="w-full p-2 border rounded mt-1"></div>
+                                <div><label class="block text-sm text-gray-600">Hủy (Cancel)</label><input type="number" id="risk-cancel" class="w-full p-2 border rounded mt-1"></div>
+                                <div><label class="block text-sm text-gray-600">No-show</label><input type="number" id="risk-noshow" class="w-full p-2 border rounded mt-1"></div>
                             </div>
                         </div>
 
                         <button onclick="saveDailyData()" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded hover:bg-blue-700 shadow-md transition">
-                            LƯU DỮ LIỆU & CẬP NHẬT DASHBOARD
+                            CẬP NHẬT DASHBOARD
                         </button>
                     </div>
                 </div>
@@ -156,43 +172,42 @@
                                 <th class="py-3 px-4 font-medium text-gray-600 text-center">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="crm-tbody">
-                            </tbody>
+                        <tbody id="crm-tbody"></tbody>
                     </table>
                 </div>
             </div>
 
             <div id="tab-market" class="tab-content bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800 border-b pb-4 mb-6">Bảng đánh giá Đối thủ (Thang điểm 5 Sao)</h2>
+                <h2 class="text-2xl font-bold text-gray-800 border-b pb-4 mb-6">Đánh giá Đối thủ (Thang điểm 5 Sao)</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-blue-50 p-5 rounded border border-blue-100">
                         <h3 class="font-bold text-blue-800 mb-4">Nội tại (Cơ sở của bạn)</h3>
                         <div class="space-y-3">
-                            <div class="flex justify-between"><label>Giá (Price)</label><input type="number" id="m-us-price" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Chất lượng (Quality)</label><input type="number" id="m-us-qual" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Định vị (Positioning)</label><input type="number" id="m-us-pos" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Vị trí (Location)</label><input type="number" id="m-us-loc" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Cơ sở VC (Facilities)</label><input type="number" id="m-us-fac" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center"></div>
+                            <div class="flex justify-between"><label>Giá (Price)</label><input type="number" id="m-us-price" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Chất lượng (Quality)</label><input type="number" id="m-us-qual" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Định vị (Positioning)</label><input type="number" id="m-us-pos" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Vị trí (Location)</label><input type="number" id="m-us-loc" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Cơ sở VC (Facilities)</label><input type="number" id="m-us-fac" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center bg-white"></div>
                         </div>
                     </div>
                     <div class="bg-gray-50 p-5 rounded border border-gray-200">
                         <input type="text" id="comp1-name" value="Đối thủ A" class="font-bold text-gray-800 mb-4 bg-transparent border-b w-full focus:outline-none">
                         <div class="space-y-3">
-                            <div class="flex justify-between"><label>Giá (Price)</label><input type="number" id="m-c1-price" max="5" min="1" value="3" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Chất lượng (Quality)</label><input type="number" id="m-c1-qual" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Định vị (Positioning)</label><input type="number" id="m-c1-pos" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Vị trí (Location)</label><input type="number" id="m-c1-loc" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Cơ sở VC (Facilities)</label><input type="number" id="m-c1-fac" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center"></div>
+                            <div class="flex justify-between"><label>Giá (Price)</label><input type="number" id="m-c1-price" max="5" min="1" value="3" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Chất lượng (Quality)</label><input type="number" id="m-c1-qual" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Định vị (Positioning)</label><input type="number" id="m-c1-pos" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Vị trí (Location)</label><input type="number" id="m-c1-loc" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Cơ sở VC (Facilities)</label><input type="number" id="m-c1-fac" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center bg-white"></div>
                         </div>
                     </div>
                     <div class="bg-gray-50 p-5 rounded border border-gray-200">
                         <input type="text" id="comp2-name" value="Đối thủ B" class="font-bold text-gray-800 mb-4 bg-transparent border-b w-full focus:outline-none">
                         <div class="space-y-3">
-                            <div class="flex justify-between"><label>Giá (Price)</label><input type="number" id="m-c2-price" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Chất lượng (Quality)</label><input type="number" id="m-c2-qual" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Định vị (Positioning)</label><input type="number" id="m-c2-pos" max="5" min="1" value="3" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Vị trí (Location)</label><input type="number" id="m-c2-loc" max="5" min="1" value="2" class="w-16 p-1 border rounded text-center"></div>
-                            <div class="flex justify-between"><label>Cơ sở VC (Facilities)</label><input type="number" id="m-c2-fac" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center"></div>
+                            <div class="flex justify-between"><label>Giá (Price)</label><input type="number" id="m-c2-price" max="5" min="1" value="5" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Chất lượng (Quality)</label><input type="number" id="m-c2-qual" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Định vị (Positioning)</label><input type="number" id="m-c2-pos" max="5" min="1" value="3" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Vị trí (Location)</label><input type="number" id="m-c2-loc" max="5" min="1" value="2" class="w-16 p-1 border rounded text-center bg-white"></div>
+                            <div class="flex justify-between"><label>Cơ sở VC (Facilities)</label><input type="number" id="m-c2-fac" max="5" min="1" value="4" class="w-16 p-1 border rounded text-center bg-white"></div>
                         </div>
                     </div>
                 </div>
@@ -205,7 +220,9 @@
     </main>
 
     <script>
-        // 1. Quản lý Điều hướng Tab
+        // Set today's date on load
+        document.getElementById('record-date').valueAsDate = new Date();
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -213,61 +230,62 @@
             document.getElementById('nav-' + tabId).classList.add('active');
         }
 
-        // 2. Format số chuẩn Việt Nam (Dấu chấm cho nghìn, phẩy cho thập phân)
         function formatVND(num) {
-            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0);
+            return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num || 0);
         }
         function formatPercent(num) {
             return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0) + '%';
         }
 
-        // 3. Logic Nhập liệu & Auto-sum
         function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
-        
-        const TOTAL_INVENTORY = 208; // 156 HTL + 36 APT + 16 VIL
+        function setVal(id, val) { document.getElementById(id).value = val; }
 
         function autoSum() {
+            let totalInv = getVal('inv-htl') + getVal('inv-apt') + getVal('inv-vil');
             let totalSold = getVal('sold-htl') + getVal('sold-apt') + getVal('sold-vil');
             let totalRev = getVal('rev-htl') + getVal('rev-apt') + getVal('rev-vil');
+            let totalFc = getVal('fc-htl') + getVal('fc-apt') + getVal('fc-vil');
+            
+            document.getElementById('total-inv').innerText = totalInv;
             document.getElementById('total-sold').innerText = totalSold;
             document.getElementById('total-rev').innerText = formatVND(totalRev);
+            document.getElementById('total-fc').innerText = formatVND(totalFc);
+            return { totalInv, totalSold, totalRev, totalFc };
         }
 
         function saveDailyData() {
-            let sold = getVal('sold-htl') + getVal('sold-apt') + getVal('sold-vil');
-            let rev = getVal('rev-htl') + getVal('rev-apt') + getVal('rev-vil');
-            let cancel = getVal('risk-cancel');
-            let noshow = getVal('risk-noshow');
-
-            if(sold === 0 || rev === 0) {
-                alert("Vui lòng nhập đầy đủ số phòng bán và doanh thu!");
+            let totals = autoSum();
+            if(totals.totalSold === 0 || totals.totalRev === 0) {
+                alert("Vui lòng nhập số phòng bán và doanh thu!");
                 return;
             }
 
-            // Tính KPI
-            let occ = (sold / TOTAL_INVENTORY) * 100;
-            let adr = rev / sold;
-            let revpar = rev / TOTAL_INVENTORY;
-            let riskRate = ((cancel + noshow) / (sold + cancel + noshow)) * 100;
+            let occ = (totals.totalSold / totals.totalInv) * 100;
+            let adr = totals.totalRev / totals.totalSold;
+            let revpar = totals.totalRev / totals.totalInv;
+            
+            let cancel = getVal('risk-cancel');
+            let noshow = getVal('risk-noshow');
+            let riskRate = totals.totalSold > 0 ? ((cancel + noshow) / (totals.totalSold + cancel + noshow)) * 100 : 0;
+            
+            let forecastAchieved = totals.totalFc > 0 ? (totals.totalRev / totals.totalFc) * 100 : 0;
 
-            // Cập nhật DOM Dashboard
             document.getElementById('kpi-occ').innerText = formatPercent(occ);
             document.getElementById('kpi-adr').innerText = formatVND(adr);
             document.getElementById('kpi-revpar').innerText = formatVND(revpar);
+            document.getElementById('kpi-forecast').innerText = formatPercent(forecastAchieved);
             document.getElementById('kpi-risk').innerText = formatPercent(riskRate);
 
-            // Cập nhật Biểu đồ Phân khúc
             let ota = getVal('seg-ota'); let dir = getVal('seg-dir'); let cor = getVal('seg-cor'); let grp = getVal('seg-grp');
             if(ota+dir+cor+grp > 0) {
                 segmentChart.data.datasets[0].data = [ota, dir, cor, grp];
                 segmentChart.update();
             }
 
-            alert("Đã lưu dữ liệu thành công! Hãy kiểm tra tab Dashboard.");
             switchTab('dashboard');
         }
 
-        // 4. CRM Logic (Phân loại tự động)
+        // CRM Logic
         let crmData = [
             { name: "Công ty Chứng khoán SHS", rev: 1250000000, nights: 250 },
             { name: "Tập đoàn FPT", rev: 85000000, nights: 15 }
@@ -282,53 +300,37 @@
         function renderCRM() {
             let html = '';
             crmData.forEach((item, index) => {
-                html += `<tr class="border-b border-gray-100">
-                    <td class="py-3 px-4"><input type="text" class="w-full border-none bg-transparent" value="${item.name}" onchange="updateCRM(${index}, 'name', this.value)"></td>
-                    <td class="py-3 px-4"><input type="number" class="w-full border p-1 rounded" value="${item.rev}" onchange="updateCRM(${index}, 'rev', this.value)"></td>
-                    <td class="py-3 px-4"><input type="number" class="w-full border p-1 rounded" value="${item.nights}" onchange="updateCRM(${index}, 'nights', this.value)"></td>
-                    <td class="py-3 px-4">${classifyCRM(item.rev, item.nights)}</td>
-                    <td class="py-3 px-4 text-center"><button onclick="removeCRM(${index})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
+                html += `<tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 px-4"><input type="text" class="w-full border-b bg-transparent focus:outline-none" value="${item.name}" onchange="updateCRM(${index}, 'name', this.value)"></td>
+                    <td class="py-2 px-4"><input type="number" class="w-full border p-1 rounded" value="${item.rev}" onchange="updateCRM(${index}, 'rev', this.value)"></td>
+                    <td class="py-2 px-4"><input type="number" class="w-full border p-1 rounded" value="${item.nights}" onchange="updateCRM(${index}, 'nights', this.value)"></td>
+                    <td class="py-2 px-4">${classifyCRM(item.rev, item.nights)}</td>
+                    <td class="py-2 px-4 text-center"><button onclick="removeCRM(${index})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`;
             });
             document.getElementById('crm-tbody').innerHTML = html;
         }
 
-        function addCRMRow() {
-            crmData.push({ name: "Công ty Mới", rev: 0, nights: 0 });
-            renderCRM();
-        }
-        function updateCRM(idx, field, val) {
-            crmData[idx][field] = field === 'name' ? val : parseFloat(val) || 0;
-            renderCRM();
-        }
-        function removeCRM(idx) {
-            crmData.splice(idx, 1);
-            renderCRM();
-        }
+        function addCRMRow() { crmData.push({ name: "", rev: 0, nights: 0 }); renderCRM(); }
+        function updateCRM(idx, field, val) { crmData[idx][field] = field === 'name' ? val : parseFloat(val) || 0; renderCRM(); }
+        function removeCRM(idx) { crmData.splice(idx, 1); renderCRM(); }
 
-        // 5. Khởi tạo Biểu đồ (Chart.js)
+        // Charts
         let segmentChart, radarChart;
-
         window.onload = function() {
-            // Render CRM Table
             renderCRM();
-
-            // Init Doughnut Chart
+            autoSum();
+            
             const ctxSeg = document.getElementById('segmentChart').getContext('2d');
             segmentChart = new Chart(ctxSeg, {
                 type: 'doughnut',
                 data: {
                     labels: ['OTA', 'Direct', 'Corporate', 'Group/MICE'],
-                    datasets: [{
-                        data: [45, 30, 15, 10], // Sample default
-                        backgroundColor: ['#f97316', '#3b82f6', '#10b981', '#8b5cf6'],
-                        borderWidth: 0
-                    }]
+                    datasets: [{ data: [45, 30, 15, 10], backgroundColor: ['#f97316', '#3b82f6', '#10b981', '#8b5cf6'], borderWidth: 0 }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
-            // Init Radar Chart
             const ctxRad = document.getElementById('radarChart').getContext('2d');
             radarChart = new Chart(ctxRad, {
                 type: 'radar',
@@ -345,19 +347,80 @@
         };
 
         function updateRadarChart() {
-            let dataUs = [getVal('m-us-price'), getVal('m-us-qual'), getVal('m-us-pos'), getVal('m-us-loc'), getVal('m-us-fac')];
-            let dataC1 = [getVal('m-c1-price'), getVal('m-c1-qual'), getVal('m-c1-pos'), getVal('m-c1-loc'), getVal('m-c1-fac')];
-            let dataC2 = [getVal('m-c2-price'), getVal('m-c2-qual'), getVal('m-c2-pos'), getVal('m-c2-loc'), getVal('m-c2-fac')];
-            
-            radarChart.data.datasets[0].data = dataUs;
-            radarChart.data.datasets[1].data = dataC1;
-            radarChart.data.datasets[1].label = document.getElementById('comp1-name').value || 'Đối thủ 1';
-            radarChart.data.datasets[2].data = dataC2;
-            radarChart.data.datasets[2].label = document.getElementById('comp2-name').value || 'Đối thủ 2';
+            radarChart.data.datasets[0].data = [getVal('m-us-price'), getVal('m-us-qual'), getVal('m-us-pos'), getVal('m-us-loc'), getVal('m-us-fac')];
+            radarChart.data.datasets[1].data = [getVal('m-c1-price'), getVal('m-c1-qual'), getVal('m-c1-pos'), getVal('m-c1-loc'), getVal('m-c1-fac')];
+            radarChart.data.datasets[1].label = document.getElementById('comp1-name').value || 'Đối thủ A';
+            radarChart.data.datasets[2].data = [getVal('m-c2-price'), getVal('m-c2-qual'), getVal('m-c2-pos'), getVal('m-c2-loc'), getVal('m-c2-fac')];
+            radarChart.data.datasets[2].label = document.getElementById('comp2-name').value || 'Đối thủ B';
             radarChart.update();
-            
-            alert("Bản đồ Năng lực Cạnh tranh đã được cập nhật!");
             switchTab('dashboard');
+        }
+
+        // Hệ thống Backup (JSON)
+        function exportBackup() {
+            const data = {
+                date: document.getElementById('record-date').value,
+                inventory: { htl: getVal('inv-htl'), apt: getVal('inv-apt'), vil: getVal('inv-vil') },
+                sold: { htl: getVal('sold-htl'), apt: getVal('sold-apt'), vil: getVal('sold-vil') },
+                rev: { htl: getVal('rev-htl'), apt: getVal('rev-apt'), vil: getVal('rev-vil') },
+                forecast: { htl: getVal('fc-htl'), apt: getVal('fc-apt'), vil: getVal('fc-vil') },
+                segments: { ota: getVal('seg-ota'), dir: getVal('seg-dir'), cor: getVal('seg-cor'), grp: getVal('seg-grp') },
+                risk: { cancel: getVal('risk-cancel'), noshow: getVal('risk-noshow') },
+                crm: crmData,
+                market: {
+                    us: [getVal('m-us-price'), getVal('m-us-qual'), getVal('m-us-pos'), getVal('m-us-loc'), getVal('m-us-fac')],
+                    c1: { name: document.getElementById('comp1-name').value, data: [getVal('m-c1-price'), getVal('m-c1-qual'), getVal('m-c1-pos'), getVal('m-c1-loc'), getVal('m-c1-fac')] },
+                    c2: { name: document.getElementById('comp2-name').value, data: [getVal('m-c2-price'), getVal('m-c2-qual'), getVal('m-c2-pos'), getVal('m-c2-loc'), getVal('m-c2-fac')] }
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CMHL_Backup_${data.date}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if(data.date) document.getElementById('record-date').value = data.date;
+                    
+                    if(data.inventory) { setVal('inv-htl', data.inventory.htl); setVal('inv-apt', data.inventory.apt); setVal('inv-vil', data.inventory.vil); }
+                    if(data.sold) { setVal('sold-htl', data.sold.htl); setVal('sold-apt', data.sold.apt); setVal('sold-vil', data.sold.vil); }
+                    if(data.rev) { setVal('rev-htl', data.rev.htl); setVal('rev-apt', data.rev.apt); setVal('rev-vil', data.rev.vil); }
+                    if(data.forecast) { setVal('fc-htl', data.forecast.htl); setVal('fc-apt', data.forecast.apt); setVal('fc-vil', data.forecast.vil); }
+                    
+                    if(data.segments) { setVal('seg-ota', data.segments.ota); setVal('seg-dir', data.segments.dir); setVal('seg-cor', data.segments.cor); setVal('seg-grp', data.segments.grp); }
+                    if(data.risk) { setVal('risk-cancel', data.risk.cancel); setVal('risk-noshow', data.risk.noshow); }
+                    
+                    if(data.crm) { crmData = data.crm; renderCRM(); }
+                    
+                    if(data.market) {
+                        setVal('m-us-price', data.market.us[0]); setVal('m-us-qual', data.market.us[1]); setVal('m-us-pos', data.market.us[2]); setVal('m-us-loc', data.market.us[3]); setVal('m-us-fac', data.market.us[4]);
+                        document.getElementById('comp1-name').value = data.market.c1.name;
+                        setVal('m-c1-price', data.market.c1.data[0]); setVal('m-c1-qual', data.market.c1.data[1]); setVal('m-c1-pos', data.market.c1.data[2]); setVal('m-c1-loc', data.market.c1.data[3]); setVal('m-c1-fac', data.market.c1.data[4]);
+                        document.getElementById('comp2-name').value = data.market.c2.name;
+                        setVal('m-c2-price', data.market.c2.data[0]); setVal('m-c2-qual', data.market.c2.data[1]); setVal('m-c2-pos', data.market.c2.data[2]); setVal('m-c2-loc', data.market.c2.data[3]); setVal('m-c2-fac', data.market.c2.data[4]);
+                    }
+
+                    autoSum();
+                    saveDailyData();
+                    updateRadarChart();
+                    alert("Khôi phục dữ liệu thành công!");
+                } catch (error) {
+                    alert("Lỗi: Định dạng file backup không hợp lệ.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
         }
     </script>
 </body>
