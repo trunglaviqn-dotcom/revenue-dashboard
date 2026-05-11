@@ -3,270 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D'lioro Revenue Command Center - V3.0 Ultimate</title>
+    <title>Hotel Revenue Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans p-6">
 
-    <nav class="bg-slate-800 p-4 border-b border-slate-700 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold text-blue-400">COMMAND CENTER RM 2026 - V3.0</h1>
-            <div class="space-x-4">
-                <button onclick="showTab('setup')" class="px-4 py-2 bg-slate-700 rounded hover:bg-slate-600 transition">⚙️ Thiết lập & Radar</button>
-                <button onclick="showTab('dashboard')" class="px-4 py-2 bg-slate-700 rounded hover:bg-slate-600 transition">📊 Báo cáo Chiến lược</button>
-                <button onclick="exportPDF()" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 font-bold shadow-lg transition">📄 Xuất Báo Cáo PDF</button>
-            </div>
-        </div>
-    </nav>
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-gray-900">Quản trị Doanh thu Khách sạn (Manual Entry)</h1>
 
-    <div class="max-w-7xl mx-auto p-6">
-        
-        <div id="tab-setup" class="tab-content">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
-                    <h2 class="text-xl font-bold mb-4 text-blue-300 flex items-center">
-                        <span class="mr-2">📈</span> 1. Cấu hình Công suất (Yielding)
-                    </h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm mb-1 text-slate-400">Giai đoạn dự báo:</label>
-                            <input type="text" id="setup-period" value="Tuần 2 - Tháng 2/2026 (Tết Âm Lịch)" class="w-full bg-slate-700 border-slate-600 p-2 rounded text-white" oninput="updateDashboard()">
-                        </div>
-                        <div>
-                            <label class="block text-sm mb-1 text-slate-400">Công suất dự báo OCC (%):</label>
-                            <input type="range" id="setup-occ-range" min="10" max="100" value="85" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('setup-occ-text').value = this.value; updateDashboard()">
-                            <input type="number" id="setup-occ-text" value="85" class="w-20 mt-2 bg-slate-700 border-slate-600 p-1 rounded text-center text-white" oninput="document.getElementById('setup-occ-range').value = this.value; updateDashboard()">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
-                    <h2 class="text-xl font-bold mb-4 text-orange-400 flex items-center">
-                        <span class="mr-2">📡</span> 2. Radar Soi Giá Đối Thủ & OTA
-                    </h2>
-                    <button onclick="scanMarketRadar()" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded mb-4 animate-pulse">
-                        Sếp bấm vào đây để Quét Radar Real-time
-                    </button>
-                    
-                    <div id="radar-results" class="hidden space-y-3 bg-slate-900 p-4 rounded border border-slate-700">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-slate-400">Website D'lioro (Base):</span>
-                            <span id="price-direct" class="font-bold text-white">1,200,000 ₫</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-slate-400">OTA (Agoda/Booking):</span>
-                            <span id="price-ota" class="font-bold text-yellow-400">Đang quét...</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-slate-400">Đối thủ A (Hotel A):</span>
-                            <span id="price-compA" class="font-bold text-red-400">Đang quét...</span>
-                        </div>
-                        <hr class="border-slate-700">
-                        <div id="parity-alert" class="text-sm font-bold p-2 rounded">
-                            </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-dashboard" class="tab-content hidden">
-            <div id="report-area" class="bg-white text-slate-900 p-8 rounded-xl shadow-2xl relative">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="bg-white p-6 rounded-xl shadow-md lg:col-span-1">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2">Nhập liệu Hàng ngày</h2>
                 
-                <div class="flex justify-between border-b-2 border-slate-200 pb-4 mb-6">
-                    <div>
-                        <h1 class="text-3xl font-extrabold uppercase text-slate-800">Báo Cáo Chiến Lược Giá Trí Tuệ</h1>
-                        <p class="text-slate-500 font-medium">Giai đoạn: <span id="display-period" class="text-blue-600"></span></p>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Tổng số phòng (Inventory)</label>
+                    <input type="number" id="totalRooms" value="208" class="mt-1 w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500" readonly>
+                    <small class="text-gray-500">Mặc định theo cấu trúc khách sạn</small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Số phòng đã bán (Rooms Sold)</label>
+                    <input type="number" id="roomsSold" placeholder="VD: 145" class="mt-1 w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700">Tổng doanh thu (VND)</label>
+                    <input type="number" id="totalRevenue" placeholder="VD: 312500000" class="mt-1 w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <button onclick="calculateAndRender()" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded hover:bg-blue-700 transition">
+                    Cập nhật Dashboard
+                </button>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500">
+                        <p class="text-sm text-gray-500 font-medium uppercase">Occupancy</p>
+                        <p class="text-3xl font-bold text-gray-800 mt-1" id="kpi-occ">0%</p>
                     </div>
-                    <div class="text-right">
-                        <p class="font-bold text-xl">D'lioro Hotel</p>
-                        <p id="current-date" class="text-sm text-gray-500"></p>
+                    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-green-500">
+                        <p class="text-sm text-gray-500 font-medium uppercase">ADR (Giá bình quân)</p>
+                        <p class="text-3xl font-bold text-gray-800 mt-1" id="kpi-adr">0</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-indigo-500">
+                        <p class="text-sm text-gray-500 font-medium uppercase">RevPAR</p>
+                        <p class="text-3xl font-bold text-gray-800 mt-1" id="kpi-revpar">0</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
-                        <p class="text-sm text-blue-600 font-bold uppercase">Công suất dự báo</p>
-                        <p id="display-occ" class="text-4xl font-black">85%</p>
-                    </div>
-                    <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
-                        <p class="text-sm text-green-600 font-bold uppercase">Chiến lược mở giá</p>
-                        <p id="suggested-bar" class="text-4xl font-black">BAR 2</p>
-                    </div>
-                    <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500 shadow-sm">
-                        <p class="text-sm text-red-600 font-bold uppercase">Tình trạng Rate Parity</p>
-                        <p id="display-parity" class="text-xl font-bold text-red-600 mt-2">Chưa quét Radar</p>
-                    </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold mb-4">Biểu đồ Kinerja Tức thời</h3>
+                    <canvas id="revenueChart" height="100"></canvas>
                 </div>
 
-                <div class="bg-slate-50 p-6 rounded-lg border border-slate-200 mb-8">
-                    <h3 class="text-lg font-bold mb-3 flex items-center text-slate-800">
-                        <span class="mr-2">🧠</span> TRỢ LÝ REVENUE MANAGER PHÂN TÍCH:
-                    </h3>
-                    <p id="report-reason" class="leading-relaxed text-slate-700 italic text-justify">
-                        Đang phân tích dữ liệu...
-                    </p>
-                </div>
-
-                <h3 class="text-lg font-bold mb-3 text-slate-800">📊 MA TRẬN GIÁ ĐỀ XUẤT CHO SALES</h3>
-                <table class="w-full text-sm border-collapse rounded-lg overflow-hidden shadow-sm">
-                    <thead>
-                        <tr class="bg-slate-800 text-white">
-                            <th class="border p-3 text-left">Hạng Phòng</th>
-                            <th class="border p-3 text-center">Cost (Giá vốn)</th>
-                            <th class="border p-3 text-center bg-blue-700">Giá BAR Đề xuất (Nhảy theo OCC)</th>
-                            <th class="border p-3 text-center">Biên Lợi Nhuận</th>
-                        </tr>
-                    </thead>
-                    <tbody id="price-matrix-body">
-                        </tbody>
-                </table>
             </div>
         </div>
-
     </div>
 
     <script>
-        // Data Base
-        const baseCostSDD = 491000;
-        const currentDirectPrice = 1200000; // Giá đang set trên Web
-        let otaPrice = 1200000;
-        let compAPrice = 1300000;
-        let isScanned = false;
-
-        const rooms = [
-            { id: 'sdd', name: 'Senior Deluxe (SDD)', cost: 491000, supp: 0 },
-            { id: 'dst', name: 'Deluxe Suite (DST)', cost: 717000, supp: 1500000 },
-            { id: 'lst', name: 'Luxury Suite (LST)', cost: 773000, supp: 3000000 }
-        ];
-
-        function formatVND(val) {
-            return new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
+        // Hàm định dạng số theo chuẩn Việt Nam (Dấu . cho hàng nghìn)
+        function formatVN(number) {
+            return new Intl.NumberFormat('vi-VN').format(Math.round(number));
         }
 
-        function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById('tab-' + tab).classList.remove('hidden');
-            if(tab === 'dashboard') updateDashboard();
-        }
+        let myChart = null; // Biến lưu trữ biểu đồ
 
-        // TÍNH NĂNG RADAR GIẢ LẬP
-        function scanMarketRadar() {
-            document.getElementById('radar-results').classList.remove('hidden');
-            
-            // Random giả lập đối thủ xả giá hoặc OTA cắt hoa hồng
-            otaPrice = currentDirectPrice - (Math.floor(Math.random() * 3) * 100000); // Có thể rẻ hơn từ 0 đến 200k
-            compAPrice = currentDirectPrice + (Math.floor(Math.random() * 5 - 2) * 100000); // Giao động quanh giá của mình
-            
-            document.getElementById('price-ota').innerText = formatVND(otaPrice);
-            document.getElementById('price-compA').innerText = formatVND(compAPrice);
-            
-            const alertBox = document.getElementById('parity-alert');
-            
-            if (otaPrice < currentDirectPrice) {
-                alertBox.className = "text-sm font-bold p-3 rounded bg-red-100 text-red-700 border-l-4 border-red-500 mt-3";
-                alertBox.innerHTML = `⚠️ CẢNH BÁO RATE PARITY: Agoda đang bán phá giá rẻ hơn Website của khách sạn ${formatVND(currentDirectPrice - otaPrice)}. Sếp cần yêu cầu Sales khóa phòng OTA này!`;
-                document.getElementById('display-parity').innerText = "Thủng giá (Bị phá giá)";
-                document.getElementById('display-parity').className = "text-xl font-bold text-red-600 mt-2";
-            } else {
-                alertBox.className = "text-sm font-bold p-3 rounded bg-green-100 text-green-700 border-l-4 border-green-500 mt-3";
-                alertBox.innerHTML = `✅ AN TOÀN: OTA và Website đang đồng nhất giá.`;
-                document.getElementById('display-parity').innerText = "Đồng nhất (An toàn)";
-                document.getElementById('display-parity').className = "text-xl font-bold text-green-600 mt-2";
-            }
-            
-            isScanned = true;
-            updateDashboard(); // Cập nhật lại lý do báo cáo
-        }
+        function calculateAndRender() {
+            // 1. Lấy dữ liệu từ ô nhập liệu
+            const totalRooms = parseFloat(document.getElementById('totalRooms').value) || 0;
+            const roomsSold = parseFloat(document.getElementById('roomsSold').value) || 0;
+            const totalRevenue = parseFloat(document.getElementById('totalRevenue').value) || 0;
 
-        // LOGIC YIELDING & TỰ ĐỘNG VIẾT LÝ DO
-        function updateDashboard() {
-            const occ = parseInt(document.getElementById('setup-occ-text').value);
-            const period = document.getElementById('setup-period').value;
-            
-            document.getElementById('display-occ').innerText = occ + "%";
-            document.getElementById('display-period').innerText = period;
-
-            // Xác định mức BAR
-            let barLevel = "BAR 10";
-            let multiplier = 1; // Hệ số nhân giá
-            
-            if (occ >= 85) { barLevel = "BAR 1"; multiplier = 1.5; }
-            else if (occ >= 70) { barLevel = "BAR 3"; multiplier = 1.3; }
-            else if (occ >= 50) { barLevel = "BAR 6"; multiplier = 1.1; }
-            else { barLevel = "BAR 9"; multiplier = 0.9; }
-
-            document.getElementById('suggested-bar').innerText = barLevel;
-
-            // Render Bảng giá
-            const tbody = document.getElementById('price-matrix-body');
-            tbody.innerHTML = '';
-            
-            rooms.forEach(room => {
-                const suggestedPrice = (currentDirectPrice + room.supp) * multiplier; 
-                const profit = suggestedPrice - room.cost;
-                const marginPct = ((profit / suggestedPrice) * 100).toFixed(1);
-                
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50">
-                        <td class="p-3 font-bold text-slate-700">${room.name}</td>
-                        <td class="p-3 text-center text-slate-500">${formatVND(room.cost)}</td>
-                        <td class="p-3 text-center font-bold text-blue-700 text-lg">${formatVND(suggestedPrice)}</td>
-                        <td class="p-3 text-center text-green-600 font-bold">${marginPct}%</td>
-                    </tr>
-                `;
-            });
-
-            // Tự động sinh Lý do (Automated Reasoning Engine)
-            let reason = `Báo cáo chiến lược cho giai đoạn <b>${period}</b> được hệ thống thiết lập dựa trên công suất dự báo là <b>${occ}%</b>. <br><br>`;
-            
-            // Logic cho Occupancy
-            if (occ >= 85) {
-                reason += `- <b>Chiến lược Yielding:</b> Vì khách sạn sắp đạt ngưỡng tối đa, hệ thống kiến nghị kích hoạt <b>${barLevel}</b> (mức giá cao). Yêu cầu đóng (Close-out) các hợp đồng TA giá rẻ và các chương trình Flash Sale để tối ưu hóa Doanh thu trên mỗi phòng (RevPAR). <br>`;
-            } else if (occ < 50) {
-                reason += `- <b>Chiến lược Yielding:</b> Công suất đang ở mức nguy hiểm (${occ}%). Hệ thống đề xuất mở <b>${barLevel}</b>. Yêu cầu team Sales đẩy mạnh bán buôn (Wholesale) và tung gói Package (Phòng + F&B) để tạo lớp khách nền (Base Business) lấp đầy phòng trống. <br>`;
-            } else {
-                reason += `- <b>Chiến lược Yielding:</b> Công suất ổn định. Áp dụng <b>${barLevel}</b> để giữ nhịp độ thị trường. <br>`;
+            if (roomsSold === 0 || totalRevenue === 0) {
+                alert("Vui lòng nhập số phòng đã bán và doanh thu!");
+                return;
             }
 
-            // Logic tích hợp từ Radar (Nếu đã quét)
-            if (isScanned) {
-                if (otaPrice < currentDirectPrice) {
-                    reason += `<br>- <b>Cảnh báo Cạnh tranh:</b> Hệ thống Radar phát hiện kênh OTA đang bán phá giá (rẻ hơn Website trực tiếp). Để tránh việc khách hàng Direct bỏ sang OTA, bộ phận E-commerce cần làm việc ngay với Market Manager của đối tác để thiết lập lại <b>Rate Parity</b>.`;
-                } else if (compAPrice < currentDirectPrice) {
-                    reason += `<br>- <b>Cảnh báo Cạnh tranh:</b> Đối thủ chính đang bán rẻ hơn chúng ta. Tuy nhiên, nếu công suất của chúng ta vẫn đang tốt, đề nghị <b>không cuốn theo cuộc chiến về giá (Price War)</b> mà tập trung tăng giá trị gia tăng (Value-add) như tặng kèm nước uống, late check-out cho khách.`;
-                } else {
-                    reason += `<br>- <b>Tình trạng Cạnh tranh:</b> Cấu trúc giá hiện tại đang rất an toàn. Website trực tiếp giữ được giá tốt, không bị OTA lấn lướt và vẫn cạnh tranh tốt so với các đối thủ trong Compset.`;
+            // 2. Tính toán các chỉ số
+            const occupancy = (roomsSold / totalRooms) * 100;
+            const adr = totalRevenue / roomsSold;
+            const revpar = totalRevenue / totalRooms;
+
+            // 3. Hiển thị lên KPI Cards
+            document.getElementById('kpi-occ').innerText = occupancy.toFixed(2).replace('.', ',') + '%';
+            document.getElementById('kpi-adr').innerText = formatVN(adr) + ' ₫';
+            document.getElementById('kpi-revpar').innerText = formatVN(revpar) + ' ₫';
+
+            // 4. Vẽ lại biểu đồ
+            renderChart(adr, revpar);
+        }
+
+        function renderChart(currentAdr, currentRevpar) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            // Xóa biểu đồ cũ nếu có để vẽ cái mới
+            if (myChart != null) {
+                myChart.destroy();
+            }
+
+            // Dữ liệu mô phỏng các ngày trước đó + ngày hiện tại vừa nhập
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Hôm kia', 'Hôm qua', 'Hôm nay (Vừa nhập)'],
+                    datasets: [
+                        {
+                            label: 'ADR (VND)',
+                            data: [1150000, 1200000, currentAdr],
+                            backgroundColor: 'rgba(34, 197, 94, 0.7)', // Màu xanh lá
+                            borderColor: 'rgb(34, 197, 94)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'RevPAR (VND)',
+                            data: [850000, 920000, currentRevpar],
+                            backgroundColor: 'rgba(99, 102, 241, 0.7)', // Màu xanh dương
+                            borderColor: 'rgb(99, 102, 241)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatVN(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatVN(context.raw) + ' ₫';
+                                }
+                            }
+                        }
+                    }
                 }
-            } else {
-                reason += `<br>- <i>Sếp hãy sang tab Setup và bấm "Quét Radar" để hệ thống lấy dữ liệu đối thủ bổ sung vào lý luận này.</i>`;
-            }
-
-            document.getElementById('report-reason').innerHTML = reason;
+            });
         }
-
-        // Xuất PDF
-        function exportPDF() {
-            // Chuyển sang tab Dashboard trước khi in
-            showTab('dashboard');
-            setTimeout(() => {
-                const element = document.getElementById('report-area');
-                html2pdf().from(element).set({
-                    margin: [10, 10, 10, 10], // Top, Left, Bottom, Right
-                    filename: `Chien_luoc_gia_Dlioro_OCC_${document.getElementById('setup-occ-text').value}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                }).save();
-            }, 500);
-        }
-
-        // Khởi tạo
-        window.onload = () => {
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString('vi-VN');
-            updateDashboard();
-        };
     </script>
 </body>
 </html>
